@@ -94,26 +94,7 @@ defaultRules:
 
 ## Provide custom recording or alerting rules to be deployed into the cluster.
 ##
-additionalPrometheusRulesMap:
-  rule-name:
-   groups:
-      - name: Blackbox rules
-        rules:
-          - alert: SSLCertExpiringSoon
-            expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 10
-            for: 1m
-            labels:
-              severity: warning
-            annotations:
-              description: "TLS certificate will expire in {{ $value | humanizeDuration }} (instance {{ $labels.instance }})"
-
-          - alert: EndpointDown
-            expr: probe_success == 0
-            for: 10m
-            labels:
-              severity: "critical"
-            annotations:
-              summary: "Endpoint {{ $labels.instance }} down"
+additionalPrometheusRulesMap: []
 
 #  rule-name:
 #    groups:
@@ -2647,78 +2628,9 @@ prometheus:
     ## The scrape configuration example below will find master nodes, provided they have the name .*mst.*, relabel the
     ## port to 2379 and allow etcd scraping provided it is running on all Kubernetes master nodes
     ##
-    additionalScrapeConfigs:
-      - job_name: "blackbox-kubernetes-ingresses"
-        metrics_path: /probe
-        params:
-          module: [http_2xx]
-        kubernetes_sd_configs:
-        - role: ingress
-        relabel_configs:
-        # Example relabel to probe only some ingresses that have "example.io/should_be_probed = true" annotation
-        #  - source_labels: [__meta_kubernetes_ingress_annotation_example_io_should_be_probed]
-        #    action: keep
-        #    regex: true
-          - source_labels:
-              [
-                __meta_kubernetes_ingress_scheme,
-                __address__,
-                __meta_kubernetes_ingress_path,
-              ]
-            regex: (.+);(.+);(.+)
-            replacement: ${1}://${2}${3}
-            target_label: __param_target
-          - target_label: __address__
-            replacement: 10.109.89.147:9115
-          - source_labels: [__param_target]
-            target_label: instance
-          - action: labelmap
-            regex: __meta_kubernetes_ingress_label_(.+)
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_ingress_name]
-            target_label: ingress_name
-       
-      - job_name: 'mysql'
-        static_configs:
-          - targets:
-            - 10.108.207.250:3306
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: 10.98.93.226:9104
-      #- job_name: 'blackbox-external-targets-expiry'
-      #  metrics_path: /probe
-      #  params:
-      #    module: [http_2xx]
-      #  static_configs:
-      #    - targets:
-      #      - https://www.google.com
-      #      - https://www.uol.com  
-      #  relabel_configs:
-      #    - source_labels: [__address__]
-      #      target_label: __param_target
-      #    - source_labels: [__param_target]
-      #      target_label: instance
-      #    - target_label: __address__
-      #      replacement: 10.109.89.147:9115
+    additionalScrapeConfigs: []
       
   ## config for the multiple Redis targets that the exporter will scrape
-      - job_name: 'redis_exporter_targets'
-        static_configs:
-          - targets:
-            - redis://10.97.76.175:6379
-        metrics_path: /scrape
-        relabel_configs:
-          - source_labels: [__address__]
-            target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
-          - target_label: __address__
-            replacement: 10.109.242.239:9121
     
       ### config for scraping the exporter itself
       #- job_name: 'redis_exporter'
